@@ -1,0 +1,115 @@
+from google.cloud import storage
+
+def list_buckets():
+    """Lists all buckets in the project."""
+    # Initialize the client
+    client = storage.Client()
+
+    # List all buckets
+    buckets = client.list_buckets()
+    for bucket in buckets:
+        print(bucket.name)
+
+def upload_blob(bucket_name, source_file_name, destination_blob_name):
+    """Uploads a file to the specified bucket."""
+    # Initialize the client
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    # Upload the file
+    blob.upload_from_filename(source_file_name)
+
+    print(f"File {source_file_name} uploaded to {destination_blob_name}.")
+
+def download_blob(bucket_name, source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+    # Initialize the client
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+
+    # Download the file
+    blob.download_to_filename(destination_file_name)
+
+    print(f"Blob {source_blob_name} downloaded to {destination_file_name}.")
+
+def delete_blob(bucket_name, blob_name):
+    """Deletes a blob from the bucket."""
+    # Initialize the client
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+
+    # Delete the blob
+    blob.delete()
+
+    print(f"Blob {blob_name} deleted.")
+
+# Example usage
+if __name__ == "__main__":
+    list_buckets()
+    upload_blob('your-bucket-name', 'local-file.txt', 'storage-object-name')
+    download_blob('your-bucket-name', 'storage-object-name', 'local-file.txt')
+    delete_blob('your-bucket-name', 'storage-object-name')
+
+
+
+import requests
+
+def upload_to_cloud(file_path, upload_url):
+    with open(file_path, 'rb') as file:
+        response = requests.post(upload_url, files={'file': file})
+    return response.json()
+
+# Example usage
+upload_url = 'https://seasensecloud.sg4.quickconnect.to/upload'  # Replace with actual URL
+response = upload_to_cloud('Chest CT-Scan/Data/test/adenocarcinoma/000108 (3).png', upload_url)
+print(response)
+
+
+
+
+
+
+
+import requests
+
+def download_file_from_pcloud(access_token, file_id, destination):
+    """
+    Download a file from pCloud.
+
+    Args:
+    access_token (str): Your pCloud API access token.
+    file_id (str): The ID of the file to download.
+    destination (str): Path to save the downloaded file.
+    """
+    # API URL for file download
+    url = f'https://api.pcloud.com/getfilelink?fileid={file_id}&access_token={access_token}'
+    
+    # Send a request to get the file link
+    response = requests.get(url)
+    if response.status_code == 200:
+        # Extract the download link from the response
+        download_url = response.json().get('filelink')
+        
+        # Download the file from the download link
+        download_response = requests.get(download_url, stream=True)
+        if download_response.status_code == 200:
+            # Save the file to the destination path
+            with open(destination, 'wb') as f:
+                for chunk in download_response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print('File downloaded successfully.')
+        else:
+            print(f'Failed to download file. Status code: {download_response.status_code}')
+    else:
+        print(f'Failed to get file link. Status code: {response.status_code}')
+        print('Response content:', response.text)
+
+# Replace with your access token, file ID, and desired destination path
+access_token = 'your_access_token_here'
+file_id = 'your_file_id_here'
+destination = 'downloaded_file.ext'
+
+download_file_from_pcloud(access_token, file_id, destination)
